@@ -24,7 +24,7 @@ Required information:
 ### DynDNS for QNAP NAS
 `Network- and Virtual Switch` -> `DDNS` -> `Add` -> `Select DNS server: Customized`
 
-![QNAP DDNS](https://raw.githubusercontent.com/lmxx1234567/cloudflare-ddns/main/.github/images/qnap-ddns.png "QNAP DDNS")
+![QNAP DDNS](https://raw.githubusercontent.com/lmxx1234567/cloudflare-ddns/main/images/qnap-ddns.png "QNAP DDNS")
 
 - Username: Your Cloudflare Account email
 - Password: Your Cloudflare Global API Key
