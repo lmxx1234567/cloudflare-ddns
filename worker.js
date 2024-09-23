@@ -15,13 +15,12 @@ export default {
         // Extract parameters from the request
         const email = params.get('email');
         const apiKey = params.get('api_key');
-        const domain = params.get('domain');
         const record = params.get('record');
         const ip = params.get('ip');
         const ttl = params.get('ttl') || '120';
 
         // Validate input
-        if (!email || !apiKey || !domain || !record || !ip) {
+        if (!email || !apiKey || !record || !ip) {
             return new Response('Missing required parameters', { status: 400 });
         }
 
@@ -33,6 +32,16 @@ export default {
         };
 
         try {
+            // Get the domain from the record
+            let domain = record;
+            const recordParts = record.split('.');
+            if (recordParts.length < 2) {
+                return new Response('Invalid record format', { status: 400 });
+            }
+            // If the record is exactly 2 parts, it's a root domain
+            if (recordParts.length > 2) {
+                domain = recordParts.slice(1).join('.');
+            }
             // Cloudflare API endpoint for zones
             const cloudflareZoneApiUrl = `https://api.cloudflare.com/client/v4/zones?name=${domain}`;
 
