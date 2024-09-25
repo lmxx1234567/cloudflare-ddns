@@ -44,7 +44,7 @@ export default {
             if (recordParts.length > 2) {
                 domain = recordParts.slice(1).join('.');
                 record = recordParts[0];
-            }else{
+            } else {
                 record = '@';
             }
             // Cloudflare API endpoint for zones
@@ -79,19 +79,20 @@ export default {
                 return new Response('Found DNS records error', { status: 500 });
             }
 
+            const updateDNSRequest = {
+                type: dnsType,
+                name: `${record}.${domain}`,
+                content: ip,
+                ttl: parseInt(ttl),
+                proxied: proxied === 'true'
+            }
+
             if (dnsRecords.result.length === 0) {
                 // No DNS record found, create a new one
                 const createResponse = await fetch(cloudflareDnsApiUrl, {
                     method: 'POST',
                     headers,
-                    body: JSON.stringify({
-                        type: 'A',
-                        name: `${record}.${domain}`,
-                        content: ip,
-                        ttl: parseInt(ttl),
-                        proxied: false
-
-                    }),
+                    body: JSON.stringify(updateDNSRequest),
                     signal: AbortSignal.timeout(5000)
                 });
 
@@ -109,13 +110,7 @@ export default {
                 const updateResponse = await fetch(`${cloudflareDnsApiUrl}/${recordId}`, {
                     method: 'PUT',
                     headers,
-                    body: JSON.stringify({
-                        type: dnsType,
-                        name: `${record}.${domain}`,
-                        content: ip,
-                        ttl: parseInt(ttl),
-                        proxied: proxied === 'true'
-                    }),
+                    body: JSON.stringify(updateDNSRequest),
                     signal: AbortSignal.timeout(5000)
                 });
 
