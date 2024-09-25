@@ -15,7 +15,7 @@ export default {
         // Extract parameters from the request
         const email = params.get('email');
         const apiKey = params.get('api_key');
-        const record = params.get('record');
+        let record = params.get('record');
         const ip = params.get('ip');
         const ttl = params.get('ttl') || '1'; // Setting to 1 means 'automatic'.
         const proxied = params.get('proxied') || 'false';
@@ -43,6 +43,9 @@ export default {
             // If the record is exactly 2 parts, it's a root domain
             if (recordParts.length > 2) {
                 domain = recordParts.slice(1).join('.');
+                record = recordParts[0];
+            }else{
+                record = '@';
             }
             // Cloudflare API endpoint for zones
             const cloudflareZoneApiUrl = `https://api.cloudflare.com/client/v4/zones?name=${domain}`;
