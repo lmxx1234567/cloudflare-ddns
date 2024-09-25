@@ -67,7 +67,7 @@ To get your public IP address you can use the following cURL command:
 curl https://ipinfo.io/ip
 ```
 ## TODO
-- [ ] Add support for custom DNS settings like `proxied` or `auto_ttl`
+- [x] Add support for custom DNS settings like `proxied` or `auto_ttl`
 - [ ] Add support for automatic SSL certificate renewal
 
 ## License

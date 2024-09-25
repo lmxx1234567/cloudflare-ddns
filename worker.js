@@ -17,7 +17,9 @@ export default {
         const apiKey = params.get('api_key');
         const record = params.get('record');
         const ip = params.get('ip');
-        const ttl = params.get('ttl') || '120';
+        const ttl = params.get('ttl') || '1'; // Setting to 1 means 'automatic'.
+        const proxied = params.get('proxied') || 'false';
+
 
         // Validate input
         if (!email || !apiKey || !record || !ip) {
@@ -85,6 +87,7 @@ export default {
                         content: ip,
                         ttl: parseInt(ttl),
                         proxied: false
+
                     }),
                     signal: AbortSignal.timeout(5000)
                 });
@@ -96,16 +99,19 @@ export default {
             } else {
                 const recordId = dnsRecords.result[0].id;
 
+                // Get DNS type by IP type
+                const dnsType = ip.includes(':') ? 'AAAA' : 'A';
+
                 // Update the DNS record with the new IP
                 const updateResponse = await fetch(`${cloudflareDnsApiUrl}/${recordId}`, {
                     method: 'PUT',
                     headers,
                     body: JSON.stringify({
-                        type: 'A',
+                        type: dnsType,
                         name: `${record}.${domain}`,
                         content: ip,
                         ttl: parseInt(ttl),
-                        proxied: false
+                        proxied: proxied === 'true'
                     }),
                     signal: AbortSignal.timeout(5000)
                 });
