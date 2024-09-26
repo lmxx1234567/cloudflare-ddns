@@ -80,7 +80,7 @@ export default {
             }
 
             const updateDNSRequest = {
-                type: dnsType,
+                type: ip.includes(':') ? 'AAAA' : 'A', // Get DNS type by IP type
                 name: `${record}.${domain}`,
                 content: ip,
                 ttl: parseInt(ttl),
@@ -102,9 +102,6 @@ export default {
                 }
             } else {
                 const recordId = dnsRecords.result[0].id;
-
-                // Get DNS type by IP type
-                const dnsType = ip.includes(':') ? 'AAAA' : 'A';
 
                 // Update the DNS record with the new IP
                 const updateResponse = await fetch(`${cloudflareDnsApiUrl}/${recordId}`, {
