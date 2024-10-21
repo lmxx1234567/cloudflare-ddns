@@ -1,5 +1,5 @@
 # cloudflare-ddns
-Cloudflare DDNS for QNAP and Synology NAS. Based on Cloudflare Worker or other Serverless functions.
+Cloudflare DDNS for QNAP and Synology NAS and other Linux systems. Based on Cloudflare Worker or other Serverless functions.
 
 With this small but nice interface, it is possible to host your own api to use Cloudflare domains for your DynDNS on QNAP or Synology NAS systems
 
@@ -74,4 +74,4 @@ curl https://ipinfo.io/ip
 [MIT](LICENSE)
 
 ## Credits
-This project is based on [fbrettnich/cloudflare-dyndns-php](https://github.com/fbrettnich/cloudflare-dyndns-php)
+This project is inspire by [fbrettnich/cloudflare-dyndns-php](https://github.com/fbrettnich/cloudflare-dyndns-php). We ported the PHP code to Cloudflare Worker to make it more scalable and easier to use.
