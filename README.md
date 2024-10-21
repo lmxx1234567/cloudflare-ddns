@@ -11,7 +11,7 @@ The API responds with JSON and matching status codes for QNAP and Synology syste
 Required information:
 - Cloudflare Account email
 - Cloudflare [Global API Key](https://dash.cloudflare.com/profile/api-tokens "Global API Key") *(not Origin CA Key)* 
-- Cloudflare Domain *(like `example.com`)*
+- Cloudflare registered domain *(like `example.com`)*
 - DNS Record *(like `my-ddns.example.com`)*
 
 ------------
