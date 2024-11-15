@@ -7,6 +7,59 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
+async function getZoneId(domain, headers) {
+    const cloudflareZoneApiUrl = `https://api.cloudflare.com/client/v4/zones?name=${domain}`;
+    const zoneResponse = await fetch(cloudflareZoneApiUrl, {
+        method: 'GET',
+        headers,
+        signal: AbortSignal.timeout(5000)
+    });
+    const zoneData = await zoneResponse.json();
+    if (!zoneData.success || zoneData.result.length === 0) {
+        throw new Error('Failed to fetch Zone ID for the domain');
+    }
+    return zoneData.result[0].id;
+}
+
+async function getDnsRecordId(cloudflareDnsApiUrl, record, headers) {
+    const dnsRecordsResponse = await fetch(`${cloudflareDnsApiUrl}?name=${record}`, {
+        method: 'GET',
+        headers,
+        signal: AbortSignal.timeout(5000)
+    });
+    const dnsRecords = await dnsRecordsResponse.json();
+    if (!dnsRecords.success) {
+        throw new Error('Found DNS records error');
+    }
+    return dnsRecords.result.length > 0 ? dnsRecords.result[0].id : null;
+}
+
+async function createDnsRecord(cloudflareDnsApiUrl, updateDNSRequest, headers) {
+    const createResponse = await fetch(cloudflareDnsApiUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(updateDNSRequest),
+        signal: AbortSignal.timeout(5000)
+    });
+    const createResult = await createResponse.json();
+    if (!createResult.success) {
+        throw new Error('Failed to create DNS record');
+    }
+}
+
+async function updateDnsRecord(cloudflareDnsApiUrl, recordId, updateDNSRequest, headers) {
+    const updateResponse = await fetch(`${cloudflareDnsApiUrl}/${recordId}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(updateDNSRequest),
+        signal: AbortSignal.timeout(5000)
+    });
+    const updateResult = await updateResponse.json();
+    if (!updateResult.success) {
+        throw new Error('Failed to update DNS record');
+    }
+}
+
 export default {
     async fetch(request, env, ctx) {
         const url = new URL(request.url);
@@ -19,7 +72,6 @@ export default {
         const ip = params.get('ip');
         const ttl = params.get('ttl') || '1'; // Setting to 1 means 'automatic'.
         const proxied = params.get('proxied') || 'false';
-
 
         // Validate input
         if (!email || !apiKey || !record || !ip) {
@@ -47,37 +99,10 @@ export default {
             } else {
                 record = '@';
             }
-            // Cloudflare API endpoint for zones
-            const cloudflareZoneApiUrl = `https://api.cloudflare.com/client/v4/zones?name=${domain}`;
 
-            // Fetch the zone information to get the ZONE_ID
-            const zoneResponse = await fetch(cloudflareZoneApiUrl, {
-                method: 'GET',
-                headers,
-                signal: AbortSignal.timeout(5000)
-            });
-
-            const zoneData = await zoneResponse.json();
-            if (!zoneData.success || zoneData.result.length === 0) {
-                return new Response('Failed to fetch Zone ID for the domain', { status: 404 });
-            }
-
-            const zoneId = zoneData.result[0].id;
-
-            // Cloudflare API endpoint for DNS records
+            const zoneId = await getZoneId(domain, headers);
             const cloudflareDnsApiUrl = `https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`;
-
-            // Fetch the list of DNS records to find the one to update
-            const dnsRecordsResponse = await fetch(`${cloudflareDnsApiUrl}?name=${record}.${domain}`, {
-                method: 'GET',
-                headers,
-                signal: AbortSignal.timeout(5000)
-            });
-
-            const dnsRecords = await dnsRecordsResponse.json();
-            if (!dnsRecords.success) {
-                return new Response('Found DNS records error', { status: 500 });
-            }
+            const recordId = await getDnsRecordId(cloudflareDnsApiUrl, `${record}.${domain}`, headers);
 
             const updateDNSRequest = {
                 type: ip.includes(':') ? 'AAAA' : 'A', // Get DNS type by IP type
@@ -85,36 +110,12 @@ export default {
                 content: ip,
                 ttl: parseInt(ttl),
                 proxied: proxied === 'true'
-            }
+            };
 
-            if (dnsRecords.result.length === 0) {
-                // No DNS record found, create a new one
-                const createResponse = await fetch(cloudflareDnsApiUrl, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify(updateDNSRequest),
-                    signal: AbortSignal.timeout(5000)
-                });
-
-                const createResult = await createResponse.json();
-                if (!createResult.success) {
-                    return new Response('Failed to create DNS record', { status: 500 });
-                }
+            if (recordId) {
+                await updateDnsRecord(cloudflareDnsApiUrl, recordId, updateDNSRequest, headers);
             } else {
-                const recordId = dnsRecords.result[0].id;
-
-                // Update the DNS record with the new IP
-                const updateResponse = await fetch(`${cloudflareDnsApiUrl}/${recordId}`, {
-                    method: 'PUT',
-                    headers,
-                    body: JSON.stringify(updateDNSRequest),
-                    signal: AbortSignal.timeout(5000)
-                });
-
-                const updateResult = await updateResponse.json();
-                if (!updateResult.success) {
-                    return new Response('Failed to update DNS record', { status: 500 });
-                }
+                await createDnsRecord(cloudflareDnsApiUrl, updateDNSRequest, headers);
             }
 
             return new Response('DNS record updated successfully', { status: 200 });
